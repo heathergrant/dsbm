@@ -11,7 +11,7 @@ import glob
 seqs = {}
 
 path = "/Users/abayomi/Desktop/heather/"
-f = "/Users/abayomi/Desktop/heather/ref_genomes.afa"
+f = path + "ref_genomes.afa"
 
 fa_file = SeqIO.parse(f, "fasta")
 
