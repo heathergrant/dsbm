@@ -4,16 +4,15 @@ require(jsonlite)
 #library(RColorBrewer)
 #library(dplyr)
 
-
-#setwd("./")
-#setwd("/Users/abayomi/Desktop/coronavirus/best-outputs_40/")
 getwd()
 setwd("../../genomes_500_bioinf7/json")
-tt <- read.csv("gene_dynamics.tsv", header = T, sep = "\t")
+plot_heatmap<-function(infileJ, infileG, outfile){
+
+tt <- read.csv(infileG, header = T, sep = "\t")
 #nam <- lapply(strsplit(as.character(tt$V1), "_"), "[", 2)
 #nam <- gsub("Ref_", "", as.character(tt$V1))
 
-json <- read_json("bestoutput.json")
+json <- read_json(infileJ)
 
 #json <- read_json("../../recombs_50_164/bestoutput.json")
 mb <- json$membership
@@ -33,7 +32,7 @@ hc1 <- hclust(as.dist(log(m), diag=FALSE), method='ward.D2')
 idx <- order(hc1$order)
 idx
 # draw heatmap
-pdf('heatmap_40.pdf', width=5, height=6)
+pdf(outfile, width=5, height=6)
 par(mar=c(1,1,1,1))
 pal <- hcl.colors(n, 'Sunset')
 heatmap(as.matrix(df), Rowv=T, Colv=NA, hclustfun = hclust,
@@ -42,3 +41,5 @@ heatmap(as.matrix(df), Rowv=T, Colv=NA, hclustfun = hclust,
         xlab="", ylab="",
         cex.lab = 1.3) -> h
 dev.off()
+print(paste0("value of K is" , n))
+}
