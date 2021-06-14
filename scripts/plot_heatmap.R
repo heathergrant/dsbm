@@ -34,12 +34,19 @@ idx
 # draw heatmap
 pdf(outfile, width=5, height=6)
 par(mar=c(1,1,1,1))
-pal <- hcl.colors(n, 'Sunset')
+pal <- hcl.colors(n, palette='viridis')
+require(dichromat)
+pal <- dichromat(pal, type='deutan')
 heatmap(as.matrix(df), Rowv=T, Colv=NA, hclustfun = hclust,
-        labCol=T, scale='none', col=c('white', pal[idx]),
+        labCol= T, scale='none', col=c('white', pal[idx]),
         cexCol = 0.3, cexRow = 0.45,
         xlab="", ylab="",
         cex.lab = 1.3) -> h
+legend(x=0.9, y=1.1, legend=order(idx), fill=pal, bty='n', xpd=NA,
+       cex=0.6, border='white', x.intersp=0.1)
 dev.off()
 print(paste0("value of K is" , n))
 }
+
+plot_heatmap('bestoutput.json', 'gene_dynamics.tsv', "500_msc7_heatmap_new_colours.pdf")
+
