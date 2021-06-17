@@ -48,50 +48,70 @@ blank<-read.dna("blank-dash.fasta", format='fasta')
 numWindows <- seq(1,((length(starter[1,])+500)%/%100)*100-500+1,by=100)-1
 #starter[,1]<-#list(rep("n", 3))# dim(starter)[2]
 #loop through windows - let's just make community 1 to begin with 
-Frankenstein<-starter
+#Frankenstein<-starter
 k<-1 #first community 
-for(w in 1:ncol(df)){
-  kw<-df[,w][df[,1]==k] #only 5 sequences 
-  #which genome of this lot has the most '1's elsewhere in the genome? 
-  mem1<-df[names(kw),] #subset to just ones of interest 
-  counts<-c()
-  for(c in 1:length(rownames(mem1))){
-    counts<-c(counts, sum(mem1[c,]==k))
+for(k in 1:n){
+  rm(Frankenstein)
+  Frankenstein<-starter
+  for(w in 1:ncol(df)){
+    
+    kw<-df[,w][df[,1]==k] #only 5 sequences 
+    #which genome of this lot has the most '1's elsewhere in the genome? 
+    mem1<-df[names(kw),] #subset to just ones of interest 
+    counts<-c()
+    for(c in 1:length(rownames(mem1))){
+      counts<-c(counts, sum(mem1[c,]==k))
+    }
+    top<-which(counts==max(counts))
+    top<-top[sample(length(top), 1)] #pick one if there's more than one (will have to revisit this, quick fix)
+    frank<-rownames(mem1)[top] #4th sequence is best representative because it has other 31 windows elsewhere in its genome that are also this community 
+    dna.1<- read.dna(files.dna[w], format='fasta')
+    frank.dna<-dna.1[frank,]
+    rownames(frank.dna)<-paste0("community_", k)
+    #some windows are 503 base pairs long! Presumably because of re-maffting them. 
+    frank.dna<-frank.dna[,1:500]
+    start<- numWindows[w]    #       or #100*(w+1)-200#start 
+    end<- numWindows[w+5]+1   #      or100*(w+1)+300 #end
+    blank1<-blank[,0:start]
+    rownames(blank1)<-paste0("community_", k)
+    blank2<-blank[,end:dim(starter)[2]]
+    rownames(blank2)<-paste0("community_", k)
+    rownames(frank.dna)<-paste0("community_", k)
+    #stitch blank + window + blank sequence to make an alignment of equal length Frankenstein to make cons
+    record.dna<-cbind.DNAbin(blank1,frank.dna)
+    record.dna<-cbind.DNAbin(record.dna, blank2)
+
+    Frankenstein<-rbind.DNAbin(Frankenstein, record.dna)
   }
-  top<-which(counts==max(counts))
-  top<-top[sample(length(top), 1)] #pick one if there's more than one (will have to revisit this, quick fix)
-  frank<-rownames(mem1)[top] #4th sequence is best representative because it has other windows (31) that are also this community 
-  dna.1<- read.dna(files.dna[w], format='fasta')
-  frank.dna<-dna.1[frank,]
-  rownames(frank.dna)<-paste0("community_", k)
-  #some windows are 503 base pairs long! Presumably because of re-maffting them. 
-  frank.dna<-frank.dna[,1:500]
-  start<- numWindows[w]    #       or #100*(w+1)-200#start 
-  end<- numWindows[w+5]+1   #      or100*(w+1)+300 #end
-  blank1<-blank[,0:start]
-  rownames(blank1)<-paste0("community_", k)
-  blank2<-blank[,end:dim(starter)[2]]
-  rownames(blank2)<-paste0("community_", k)
-  rownames(frank.dna)<-paste0("community_", k)
-  #stitch blank + window + blank sequence to make an alignment of equal length Frankenstein to make cons
-  record.dna<-cbind.DNAbin(blank1,frank.dna)
-  record.dna<-cbind.DNAbin(record.dna, blank2)
-  #}
-  Frankenstein<-rbind.DNAbin(Frankenstein, record.dna)
-  
+  Frankenstein<-Frankenstein[-1,]#remove starter seq 
+  write.dna(Frankenstein, paste0("Community_", k, ".fasta"), format='fasta')
+
 }
-image(Frankenstein)
-Frankenstein<-Frankenstein[-1,]#remove starter seq 
-Frankenstein_condensed<-Frankenstein[1:5,]
-for(f in 1:dim(Frankenstein[2])){
-  nt<-unique(unlist(as.character(Frankenstein[,f])))
-  for(n in 1:length(nt)){
-  Frankenstein_condensed[n,f]<-as.character(nt[n])
-  }
-}
-#install.packages("DECIPHER")
+
+#probs best to check by eye anyway? 
+#image(Frankenstein)
+#Frankenstein<-Frankenstein[-1,]#remove starter seq 
+#Frankenstein_condensed<-data.frame(1:dim(Frankenstein)[2])
+#df <- data.frame(ID=labels(Frankenstein),
+#                 seq=sapply(Frankenstein, paste, collapse=","))
+
+#for(f in 1:dim(Frankenstein)[2]){
+#  nt<-unique(Frankenstein[,f])
+#  for(n in 1:length(nt)){
+#  Frankenstein_condensed[n,f]<-as.character(nt[n])
+#  }
+#}
+#BiocManager::install("DECIPHER")
+#library(DECIPHER)
+#dnastring<-DNAStringSet(matailn)
+#ConsensusSequence(matailn,
+#
 #Frankenstein<-as.matrix.alignment(Frankenstein)
-write.dna(Frankenstein, "Community1.fasta", format='fasta')
-matailn<-read.alignment("Community1.fasta", format='fasta')
-com1<-consensus(matailn, method =  "threshold", warn.non.IUPAC = FALSE, type = "DNA", threshold = 0)
-com1
+#write.dna(Frankenstein, "Community1.fasta", format='fasta')
+#matailn<-read.alignment("Community1.fasta", format='fasta')
+#com1<-consensus(matailn, method =  "threshold", warn.non.IUPAC = FALSE, type = "DNA", threshold = 1)
+#com1
+#probably should doubel check by eye anyway. Make consensus in geneious... can't get consensus in R without gaps very easily. 
+
+
+
