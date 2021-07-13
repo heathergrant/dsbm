@@ -88,6 +88,80 @@ for(k in 1:n){
 
 }
 
+
+#blast approach to frankenstein references 
+library(ips) #for running mafft in R 
+library(ape)
+library(seqinr)
+library(parallel)
+#Q<-read.dna("../../hist_plus_ref/aln/hist_109_plus_ref_mafft_eye_leave_tough_bits_tackle.fasta", format='fasta')
+#Q<-Q[1,] #query sequence 
+Q<-read.dna("../Frankenstein/Query.fasta", format='fasta')#aligned to 27 reference genomes so should fit 
+w<-1
+query_community<-data.frame(win=1:ncol(df), k=rep(0,ncol(df)), ref=rep('U', ncol(df)))
+for(w in 1:ncol(df)){ #in each window 
+      
+    win.dna<- read.dna(files.dna[w], format='fasta') 
+    win.Q<-Q[,numWindows[w]:numWindows[w+5]-500+ncol(win.dna)]
+    together<-rbind(win.dna, win.Q)
+    align<-mafft(together, thread=10, op=3, ep=0.123, maxiterate=1000) #align
+    tn93 <- dist.dna(align, model = "TN93", variance = FALSE,
+                     gamma = FALSE, pairwise.deletion = FALSE,
+                     base.freq = NULL, as.matrix = TRUE) #make tn93 distance 
+    d<-as.data.frame(tn93) #distances in a data_frame for easier manipulation
+    d$Seq1<-rownames(d) # create new column with seq1 name
+    table<-gather(d, Seq2, distance, 1:38) # turns distance matrix into a table of pairwise comparisons
+    table2<- dplyr::filter(table, Seq1 != Seq2) #remove ones where seqs being compared with themselves
+    top<-table2[order(table2$distance),] #order by distance
+    top<-top[1,]$Seq2 #this is the closest seuqence in the reference alignment. Find out what community it belongs 
+    df[top,1]#widow 1, best match is in community 6 
+    k<-df[top,1]#widow 1, best match is in community 6 
+    query_community[w,2]<-k
+    query_community[w,3]<-top
+}
+    
+####
+
+####
+    
+    kw<-df[,w][df[,1]==k] #only 5 sequences 
+    #which genome of this lot has the most '1's elsewhere in the genome? 
+    mem1<-df[names(kw),] #subset to just ones of interest 
+    counts<-c()
+    for(c in 1:length(rownames(mem1))){
+      counts<-c(counts, sum(mem1[c,]==k))
+    }
+    top<-which(counts==max(counts))
+    top<-top[sample(length(top), 1)] #pick one if there's more than one (will have to revisit this, quick fix)
+    frank<-rownames(mem1)[top] #4th sequence is best representative because it has other 31 windows elsewhere in its genome that are also this community 
+    dna.1<- read.dna(files.dna[w], format='fasta')
+    frank.dna<-dna.1[frank,]
+    rownames(frank.dna)<-paste0("community_", k)
+    #some windows are 503 base pairs long! Presumably because of re-maffting them. 
+    frank.dna<-frank.dna[,1:500]
+    start<- numWindows[w]    #       or #100*(w+1)-200#start 
+    end<- numWindows[w+5]+1   #      or100*(w+1)+300 #end
+    blank1<-blank[,0:start]
+    rownames(blank1)<-paste0("community_", k)
+    blank2<-blank[,end:dim(starter)[2]]
+    rownames(blank2)<-paste0("community_", k)
+    rownames(frank.dna)<-paste0("community_", k)
+    #stitch blank + window + blank sequence to make an alignment of equal length Frankenstein to make cons
+    record.dna<-cbind.DNAbin(blank1,frank.dna)
+    record.dna<-cbind.DNAbin(record.dna, blank2)
+    
+    Frankenstein<-rbind.DNAbin(Frankenstein, record.dna)
+  }
+  Frankenstein<-Frankenstein[-1,]#remove starter seq 
+  write.dna(Frankenstein, paste0("Community_", k, ".fasta"), format='fasta')
+  
+}
+
+
+
+
+
+
 #probs best to check by eye anyway? 
 #image(Frankenstein)
 #Frankenstein<-Frankenstein[-1,]#remove starter seq 

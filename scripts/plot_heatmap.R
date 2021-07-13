@@ -5,7 +5,7 @@ require(jsonlite)
 #library(dplyr)
 
 getwd()
-setwd("../../genomes_500_bioinf7/json")
+setwd("../json")
 plot_heatmap<-function(infileJ, infileG, outfile){
 
 tt <- read.csv(infileG, header = T, sep = "\t")
@@ -45,8 +45,8 @@ heatmap(as.matrix(df), Rowv=T, Colv=NA, hclustfun = hclust,
 legend(x=0.9, y=1.1, legend=order(idx), fill=pal, bty='n', xpd=NA,
        cex=0.6, border='white', x.intersp=0.1)
 dev.off()
-print(paste0("value of K is" , n))
+print(paste0("value of K is " , n))
 }
 
-plot_heatmap('bestoutput.json', 'gene_dynamics.tsv', "500_msc7_heatmap_new_colours.pdf")
+plot_heatmap('bestoutput.json', 'gene_dynamics.tsv', "D_intra_heatmap.pdf")
 
